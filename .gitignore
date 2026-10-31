@@ -12,6 +12,13 @@ dist
 dist-ssr
 *.local
 
+# Local FastAPI demo
+server/.venv/
+server/data/*.sqlite3
+server/**/__pycache__/
+server/.pytest_cache/
+server/.ruff_cache/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

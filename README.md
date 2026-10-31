@@ -17,3 +17,7 @@ npm run dev
 - `npm run lint` runs Oxlint.
 
 Tailwind CSS is integrated through `@tailwindcss/vite`; styles are loaded from `src/index.css`.
+
+## Local API demo
+
+A standalone FastAPI service with SQLite persistence is documented in [server/README.md](server/README.md). It uses synthetic contacts and is intended for local development only; the frontend is not connected to it yet.
