@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 
 const initialContacts = [
   { id: 1, firstName: 'Olivia', lastName: 'Rhye', phone: '(415) 555-0132', email: 'olivia.rhye@example.com', image: 'https://i.pravatar.cc/160?img=47' },
@@ -14,6 +14,7 @@ function Icon({ name, size = 18 }) {
   if (name === 'search') return <svg {...common}><circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" /></svg>
   if (name === 'plus') return <svg {...common}><path d="M12 5v14M5 12h14" /></svg>
   if (name === 'edit') return <svg {...common}><path d="m16 4 4 4M4 20l4-.8L19 8a2.1 2.1 0 0 0-3-3L5 16z" /></svg>
+  if (name === 'delete') return <svg {...common}><path d="M3 6h18M8 6V4h8v2m3 0-1 14H6L5 6m4 4v6m6-6v6" /></svg>
   if (name === 'phone') return <svg {...common}><path d="M7 3H5a2 2 0 0 0-2 2c0 8.8 7.2 16 16 16a2 2 0 0 0 2-2v-2l-5-2-2 3a14 14 0 0 1-7-7l3-2z" /></svg>
   if (name === 'mail') return <svg {...common}><rect x="3" y="5" width="18" height="14" rx="2" /><path d="m3 7 9 6 9-6" /></svg>
   if (name === 'back') return <svg {...common}><path d="m15 18-6-6 6-6M9 12h12" /></svg>
@@ -29,17 +30,53 @@ function ContactAvatar({ contact, large = false }) {
 }
 
 function App() {
-  const [contacts, setContacts] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('phone-book-contacts')) ?? initialContacts } catch { return initialContacts }
+  const [initialData] = useState(() => {
+    try {
+      return { contacts: JSON.parse(localStorage.getItem('phone-book-contacts')) ?? initialContacts, error: '' }
+    } catch {
+      return { contacts: initialContacts, error: 'Could not load saved contacts. Showing sample contacts.' }
+    }
   })
+  const [contacts, setContacts] = useState(initialData.contacts)
   const [query, setQuery] = useState('')
   const [page, setPage] = useState({ type: 'list' })
+  const [contactToDelete, setContactToDelete] = useState(null)
+  const [feedback, setFeedback] = useState(initialData.error ? { type: 'error', message: initialData.error } : null)
+  const dialogWasOpen = useRef(false)
+  const deleteCompleted = useRef(false)
+  const deleteTrigger = useRef(null)
+  const cancelDeleteButton = useRef(null)
+  const addContactButton = useRef(null)
 
-  useEffect(() => localStorage.setItem('phone-book-contacts', JSON.stringify(contacts)), [contacts])
+  useEffect(() => {
+    if (contactToDelete) {
+      dialogWasOpen.current = true
+      cancelDeleteButton.current?.focus()
+    } else if (dialogWasOpen.current) {
+      dialogWasOpen.current = false
+      if (deleteCompleted.current) {
+        deleteCompleted.current = false
+        addContactButton.current?.focus()
+      } else {
+        deleteTrigger.current?.focus()
+      }
+      deleteTrigger.current = null
+    }
+  }, [contactToDelete])
 
   const filteredContacts = useMemo(() => contacts
     .filter((contact) => `${contact.firstName} ${contact.lastName} ${contact.phone}`.toLowerCase().includes(query.toLowerCase()))
     .sort((a, b) => a.lastName.localeCompare(b.lastName) || a.firstName.localeCompare(b.firstName)), [contacts, query])
+
+  function persistContacts(nextContacts) {
+    setContacts(nextContacts)
+    try {
+      localStorage.setItem('phone-book-contacts', JSON.stringify(nextContacts))
+      setFeedback({ type: 'success', message: 'Changes saved on this device.' })
+    } catch {
+      setFeedback({ type: 'error', message: 'Could not save changes on this device. Your latest changes are still shown until you leave this page.' })
+    }
+  }
 
   function saveContact(event) {
     event.preventDefault()
@@ -52,14 +89,51 @@ function App() {
       email: form.get('email').trim(),
       image: form.get('image').trim(),
     }
-    setContacts((current) => page.contact ? current.map((item) => item.id === contact.id ? contact : item) : [...current, contact])
+    const nextContacts = page.contact
+      ? contacts.map((item) => item.id === contact.id ? contact : item)
+      : [...contacts, contact]
+    persistContacts(nextContacts)
     setPage({ type: 'list' })
+  }
+
+  function requestDelete(contact, event) {
+    deleteTrigger.current = event.currentTarget
+    setContactToDelete(contact)
+  }
+
+  function cancelDelete() {
+    setContactToDelete(null)
+  }
+
+  function confirmDelete() {
+    if (!contactToDelete) return
+    deleteCompleted.current = true
+    persistContacts(contacts.filter((contact) => contact.id !== contactToDelete.id))
+    setContactToDelete(null)
+  }
+
+  function handleDialogKeyDown(event) {
+    if (event.key === 'Escape') {
+      event.preventDefault()
+      cancelDelete()
+    } else if (event.key === 'Tab') {
+      const firstButton = cancelDeleteButton.current
+      const lastButton = document.getElementById('confirm-delete-button')
+      if (event.shiftKey && document.activeElement === firstButton) {
+        event.preventDefault()
+        lastButton?.focus()
+      } else if (!event.shiftKey && document.activeElement === lastButton) {
+        event.preventDefault()
+        firstButton?.focus()
+      }
+    }
   }
 
   const isForm = page.type === 'add' || page.type === 'edit'
 
   return (
-    <div className="app-shell">
+    <>
+    <div className="app-shell" inert={Boolean(contactToDelete)}>
       <header className="topbar">
         <a className="brand" href="#home" onClick={(event) => { event.preventDefault(); setPage({ type: 'list' }) }}>
           <span className="brand-mark"><Icon name="phone" size={20} /></span>
@@ -90,17 +164,20 @@ function App() {
         <main className="directory-page">
           <section className="welcome-row">
             <div><p className="eyebrow">YOUR DIRECTORY</p><h1>All your people,<br className="mobile-break" /> in one place.</h1><p className="subheading">A little easier to stay in touch.</p></div>
-            <button className="button button-primary add-button" onClick={() => setPage({ type: 'add' })}><Icon name="plus" size={18} /> Add contact</button>
+            <button ref={addContactButton} className="button button-primary add-button" onClick={() => setPage({ type: 'add' })}><Icon name="plus" size={18} /> Add contact</button>
           </section>
           <section className="directory-card">
             <div className="directory-toolbar"><div><h2>Your contacts</h2><p>{contacts.length} {contacts.length === 1 ? 'person' : 'people'} in your phone book</p></div><label className="search-box"><Icon name="search" size={18} /><input aria-label="Search contacts" placeholder="Search contacts" value={query} onChange={(event) => setQuery(event.target.value)} />{query && <button aria-label="Clear search" onClick={() => setQuery('')} type="button">×</button>}</label></div>
-            {filteredContacts.length ? <div className="contact-list">{filteredContacts.map((contact) => <article className="contact-row" key={contact.id}><ContactAvatar contact={contact} /><div className="contact-main"><h3>{contact.firstName} {contact.lastName}</h3><a href={`tel:${contact.phone.replace(/[^+\d]/g, '')}`} className="contact-phone">{contact.phone}</a></div><div className="contact-email">{contact.email || <span className="muted">No email added</span>}</div><button className="icon-button" aria-label={`Edit ${contact.firstName} ${contact.lastName}`} title="Edit contact" onClick={() => setPage({ type: 'edit', contact })}><Icon name="edit" size={17} /></button></article>)}</div> : <div className="empty-state"><span className="empty-icon"><Icon name="search" size={22} /></span><h3>No contacts found</h3><p>Try a different search, or add someone new.</p><button className="button button-primary" onClick={() => setPage({ type: 'add' })}><Icon name="plus" size={17} /> Add contact</button></div>}
+            {feedback && <p className={`feedback feedback-${feedback.type}`} role={feedback.type === 'error' ? 'alert' : 'status'} aria-live={feedback.type === 'error' ? 'assertive' : 'polite'}>{feedback.message}</p>}
+            {filteredContacts.length ? <div className="contact-list">{filteredContacts.map((contact) => <article className="contact-row" key={contact.id}><ContactAvatar contact={contact} /><div className="contact-main"><h3>{contact.firstName} {contact.lastName}</h3><a href={`tel:${contact.phone.replace(/[^+\d]/g, '')}`} className="contact-phone">{contact.phone}</a></div><div className="contact-email">{contact.email || <span className="muted">No email added</span>}</div><button className="icon-button" aria-label={`Edit ${contact.firstName} ${contact.lastName}`} title="Edit contact" onClick={() => setPage({ type: 'edit', contact })}><Icon name="edit" size={17} /></button><button className="icon-button delete-button" aria-label={`Delete ${contact.firstName} ${contact.lastName}`} title="Delete contact" onClick={(event) => requestDelete(contact, event)}><Icon name="delete" size={17} /></button></article>)}</div> : <div className="empty-state"><span className="empty-icon"><Icon name="search" size={22} /></span><h3>No contacts found</h3><p>Try a different search, or add someone new.</p><button className="button button-primary" onClick={() => setPage({ type: 'add' })}><Icon name="plus" size={17} /> Add contact</button></div>}
             <div className="directory-footer"><span><span className="status-dot" /> All changes are saved on this device</span><span>PHONE BOOK <span className="footer-dot">·</span> {String(filteredContacts.length).padStart(2, '0')} CONTACTS</span></div>
           </section>
         </main>
       )}
       <footer className="page-footer">MADE FOR THE PEOPLE YOU KEEP CLOSE <span>✳</span></footer>
     </div>
+    {contactToDelete && <div className="dialog-backdrop"><section className="confirm-dialog" role="alertdialog" aria-modal="true" aria-labelledby="confirm-delete-title" aria-describedby="confirm-delete-description" onKeyDown={handleDialogKeyDown}><p className="eyebrow">REMOVE CONTACT</p><h2 id="confirm-delete-title">Delete {contactToDelete.firstName} {contactToDelete.lastName}?</h2><p id="confirm-delete-description">This contact will be removed from your phone book. This action cannot be undone.</p><div className="dialog-actions"><button ref={cancelDeleteButton} className="button button-quiet" onClick={cancelDelete}>Cancel</button><button id="confirm-delete-button" className="button button-danger" onClick={confirmDelete}>Delete contact</button></div></section></div>}
+    </>
   )
 }
 

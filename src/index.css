@@ -16,6 +16,7 @@
 body { margin: 0; min-width: 320px; min-height: 100vh; }
 button, input { font: inherit; }
 button { cursor: pointer; }
+button:focus-visible, a:focus-visible { outline: 3px solid #91bca1; outline-offset: 3px; }
 .app-shell { min-height: 100vh; background: #f7f8f7; }
 .topbar { height: 76px; max-width: 1120px; padding: 0 28px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #e8ebe8; }
 .brand { display: flex; gap: 10px; align-items: center; text-decoration: none; color: #262c30; font-size: 17px; font-weight: 700; letter-spacing: -.5px; }
@@ -59,6 +60,19 @@ h1 { margin: 0; color: #242a2a; font-size: clamp(38px, 5vw, 52px); line-height: 
 .muted { color: #b0b6b2; }
 .icon-button { width: 34px; height: 34px; border: 1px solid transparent; border-radius: 7px; display: grid; place-items: center; color: #89918c; background: transparent; }
 .icon-button:hover { border-color: #e3eae4; color: #477d61; background: #f1f7f2; }
+.delete-button:hover { border-color: #f0d9d5; color: #a34f43; background: #fff7f5; }
+.feedback { margin: 0; padding: 10px 26px; border-bottom: 1px solid #edf0ed; font-size: 12px; }
+.feedback-loading { color: #667d6e; background: #f8fbf8; }
+.feedback-success { color: #3f7656; background: #f2f8f3; }
+.feedback-error { color: #9c493f; background: #fff6f4; }
+.dialog-backdrop { position: fixed; z-index: 10; inset: 0; display: grid; place-items: center; padding: 20px; background: #1f292466; }
+.confirm-dialog { width: min(100%, 430px); padding: 27px; border: 1px solid #e9ece9; border-radius: 13px; background: white; box-shadow: 0 24px 80px #1e312633; }
+.confirm-dialog .eyebrow { margin-bottom: 9px; }
+.confirm-dialog h2 { margin: 0; color: #303734; font-size: 21px; font-weight: 600; letter-spacing: -.035em; }
+.confirm-dialog > p:not(.eyebrow) { margin: 10px 0 0; color: #7c8580; font-size: 13px; line-height: 1.6; }
+.dialog-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px; }
+.button-danger { color: white; background: #a44f43; }
+.button-danger:hover { background: #8e4036; }
 .directory-footer { min-height: 47px; padding: 0 26px; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #edf0ed; color: #9aa19c; font-size: 10px; }
 .directory-footer > span:first-child { display: flex; align-items: center; gap: 8px; }
 .directory-footer > span:last-child { font-size: 9px; letter-spacing: .12em; }
@@ -105,6 +119,7 @@ h1 { margin: 0; color: #242a2a; font-size: clamp(38px, 5vw, 52px); line-height: 
   .contact-email { display: none; }
   .directory-footer { padding: 0 15px; font-size: 9px; }
   .directory-footer > span:last-child { display: none; }
+  .feedback { padding-inline: 15px; }
   .form-page { padding-top: 30px; }
   .form-heading { gap: 13px; margin: 28px 0 23px; }
   .form-heading h1 { font-size: 30px; }
