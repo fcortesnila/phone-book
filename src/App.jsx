@@ -25,8 +25,8 @@ function ContactAvatar({ contact, large = false }) {
   const [failed, setFailed] = useState(false)
   const initials = `${contact.firstName?.[0] ?? ''}${contact.lastName?.[0] ?? ''}`.toUpperCase()
   return contact.image && !failed
-    ? <img className={`avatar ${large ? 'avatar-large' : ''}`} src={contact.image} alt={`${contact.firstName} ${contact.lastName}`} onError={() => setFailed(true)} />
-    : <span className={`avatar avatar-fallback ${large ? 'avatar-large' : ''}`} aria-label={`${contact.firstName} ${contact.lastName}`}>{initials || '?'}</span>
+    ? <img className={`avatar ${large ? 'avatar-large' : ''}`} src={contact.image} alt="" onError={() => setFailed(true)} />
+    : <span className={`avatar avatar-fallback ${large ? 'avatar-large' : ''}`} aria-hidden="true">{initials || '?'}</span>
 }
 
 function App() {
@@ -46,7 +46,10 @@ function App() {
   const deleteCompleted = useRef(false)
   const deleteTrigger = useRef(null)
   const cancelDeleteButton = useRef(null)
+  const confirmDeleteButton = useRef(null)
   const addContactButton = useRef(null)
+  const contactsHeading = useRef(null)
+  const formWasOpen = useRef(false)
 
   useEffect(() => {
     if (contactToDelete) {
@@ -68,13 +71,13 @@ function App() {
     .filter((contact) => `${contact.firstName} ${contact.lastName} ${contact.phone}`.toLowerCase().includes(query.toLowerCase()))
     .sort((a, b) => a.lastName.localeCompare(b.lastName) || a.firstName.localeCompare(b.firstName)), [contacts, query])
 
-  function persistContacts(nextContacts) {
+  function persistContactsWithMessage(nextContacts, successMessage) {
     setContacts(nextContacts)
     try {
       localStorage.setItem('phone-book-contacts', JSON.stringify(nextContacts))
-      setFeedback({ type: 'success', message: 'Changes saved on this device.' })
+      setFeedback({ type: 'success', message: `${successMessage} Changes saved on this device.` })
     } catch {
-      setFeedback({ type: 'error', message: 'Could not save changes on this device. Your latest changes are still shown until you leave this page.' })
+      setFeedback({ type: 'error', message: `Could not save changes on this device. ${successMessage} This change may be lost when you leave this page.` })
     }
   }
 
@@ -92,7 +95,7 @@ function App() {
     const nextContacts = page.contact
       ? contacts.map((item) => item.id === contact.id ? contact : item)
       : [...contacts, contact]
-    persistContacts(nextContacts)
+    persistContactsWithMessage(nextContacts, `${contact.firstName} ${contact.lastName} ${page.contact ? 'updated' : 'added'}.`)
     setPage({ type: 'list' })
   }
 
@@ -108,7 +111,10 @@ function App() {
   function confirmDelete() {
     if (!contactToDelete) return
     deleteCompleted.current = true
-    persistContacts(contacts.filter((contact) => contact.id !== contactToDelete.id))
+    persistContactsWithMessage(
+      contacts.filter((contact) => contact.id !== contactToDelete.id),
+      `${contactToDelete.firstName} ${contactToDelete.lastName} deleted.`,
+    )
     setContactToDelete(null)
   }
 
@@ -118,7 +124,7 @@ function App() {
       cancelDelete()
     } else if (event.key === 'Tab') {
       const firstButton = cancelDeleteButton.current
-      const lastButton = document.getElementById('confirm-delete-button')
+      const lastButton = confirmDeleteButton.current
       if (event.shiftKey && document.activeElement === firstButton) {
         event.preventDefault()
         lastButton?.focus()
@@ -131,9 +137,20 @@ function App() {
 
   const isForm = page.type === 'add' || page.type === 'edit'
 
+  useEffect(() => {
+    if (isForm) {
+      formWasOpen.current = true
+    } else if (formWasOpen.current) {
+      formWasOpen.current = false
+      contactsHeading.current?.focus()
+    }
+  }, [isForm])
+
   return (
     <>
     <div className="app-shell" inert={Boolean(contactToDelete)}>
+      <div className="sr-only" role="status" aria-live="polite" aria-atomic="true">{feedback?.type === 'error' ? '' : feedback?.message ?? ''}</div>
+      <div className="sr-only" role="alert" aria-live="assertive" aria-atomic="true">{feedback?.type === 'error' ? feedback.message : ''}</div>
       <header className="topbar">
         <a className="brand" href="#home" onClick={(event) => { event.preventDefault(); setPage({ type: 'list' }) }}>
           <span className="brand-mark"><Icon name="phone" size={20} /></span>
@@ -167,8 +184,8 @@ function App() {
             <button ref={addContactButton} className="button button-primary add-button" onClick={() => setPage({ type: 'add' })}><Icon name="plus" size={18} /> Add contact</button>
           </section>
           <section className="directory-card">
-            <div className="directory-toolbar"><div><h2>Your contacts</h2><p>{contacts.length} {contacts.length === 1 ? 'person' : 'people'} in your phone book</p></div><label className="search-box"><Icon name="search" size={18} /><input aria-label="Search contacts" placeholder="Search contacts" value={query} onChange={(event) => setQuery(event.target.value)} />{query && <button aria-label="Clear search" onClick={() => setQuery('')} type="button">×</button>}</label></div>
-            {feedback && <p className={`feedback feedback-${feedback.type}`} role={feedback.type === 'error' ? 'alert' : 'status'} aria-live={feedback.type === 'error' ? 'assertive' : 'polite'}>{feedback.message}</p>}
+            <div className="directory-toolbar"><div><h2 ref={contactsHeading} tabIndex={-1}>Your contacts</h2><p>{contacts.length} {contacts.length === 1 ? 'person' : 'people'} in your phone book</p></div><label className="search-box"><Icon name="search" size={18} /><input aria-label="Search contacts" placeholder="Search contacts" value={query} onChange={(event) => setQuery(event.target.value)} />{query && <button aria-label="Clear search" onClick={() => setQuery('')} type="button">×</button>}</label></div>
+            {feedback && <p aria-hidden="true" className={`feedback feedback-${feedback.type}`}>{feedback.message}</p>}
             {filteredContacts.length ? <div className="contact-list">{filteredContacts.map((contact) => <article className="contact-row" key={contact.id}><ContactAvatar contact={contact} /><div className="contact-main"><h3>{contact.firstName} {contact.lastName}</h3><a href={`tel:${contact.phone.replace(/[^+\d]/g, '')}`} className="contact-phone">{contact.phone}</a></div><div className="contact-email">{contact.email || <span className="muted">No email added</span>}</div><button className="icon-button" aria-label={`Edit ${contact.firstName} ${contact.lastName}`} title="Edit contact" onClick={() => setPage({ type: 'edit', contact })}><Icon name="edit" size={17} /></button><button className="icon-button delete-button" aria-label={`Delete ${contact.firstName} ${contact.lastName}`} title="Delete contact" onClick={(event) => requestDelete(contact, event)}><Icon name="delete" size={17} /></button></article>)}</div> : <div className="empty-state"><span className="empty-icon"><Icon name="search" size={22} /></span><h3>No contacts found</h3><p>Try a different search, or add someone new.</p><button className="button button-primary" onClick={() => setPage({ type: 'add' })}><Icon name="plus" size={17} /> Add contact</button></div>}
             <div className="directory-footer"><span><span className="status-dot" /> All changes are saved on this device</span><span>PHONE BOOK <span className="footer-dot">·</span> {String(filteredContacts.length).padStart(2, '0')} CONTACTS</span></div>
           </section>
@@ -176,7 +193,7 @@ function App() {
       )}
       <footer className="page-footer">MADE FOR THE PEOPLE YOU KEEP CLOSE <span>✳</span></footer>
     </div>
-    {contactToDelete && <div className="dialog-backdrop"><section className="confirm-dialog" role="alertdialog" aria-modal="true" aria-labelledby="confirm-delete-title" aria-describedby="confirm-delete-description" onKeyDown={handleDialogKeyDown}><p className="eyebrow">REMOVE CONTACT</p><h2 id="confirm-delete-title">Delete {contactToDelete.firstName} {contactToDelete.lastName}?</h2><p id="confirm-delete-description">This contact will be removed from your phone book. This action cannot be undone.</p><div className="dialog-actions"><button ref={cancelDeleteButton} className="button button-quiet" onClick={cancelDelete}>Cancel</button><button id="confirm-delete-button" className="button button-danger" onClick={confirmDelete}>Delete contact</button></div></section></div>}
+    {contactToDelete && <div className="dialog-backdrop"><section className="confirm-dialog" role="alertdialog" aria-modal="true" aria-labelledby="confirm-delete-title" aria-describedby="confirm-delete-description" onKeyDown={handleDialogKeyDown}><p className="eyebrow">REMOVE CONTACT</p><h2 id="confirm-delete-title">Delete {contactToDelete.firstName} {contactToDelete.lastName}?</h2><p id="confirm-delete-description">This contact will be removed from your phone book. This action cannot be undone.</p><div className="dialog-actions"><button ref={cancelDeleteButton} className="button button-quiet" onClick={cancelDelete}>Cancel</button><button ref={confirmDeleteButton} className="button button-danger" onClick={confirmDelete}>Delete contact</button></div></section></div>}
     </>
   )
 }

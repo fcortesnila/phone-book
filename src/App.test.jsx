@@ -37,6 +37,7 @@ describe('phone book', () => {
     const user = userEvent.setup()
     renderApp()
     await user.click(screen.getByRole('button', { name: 'Add contact', exact: true }))
+    expect(screen.getByLabelText('First name')).toHaveFocus()
     await user.type(screen.getByLabelText('First name'), 'Taylor')
     await user.type(screen.getByLabelText('Last name'), 'Jordan')
     await user.type(screen.getByLabelText('Phone number'), '(555) 010-2040')
@@ -46,12 +47,15 @@ describe('phone book', () => {
     expect(screen.getByRole('heading', { name: 'Taylor Jordan' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: '(555) 010-2040' })).toBeInTheDocument()
     expect(screen.getByText('taylor.jordan@example.test')).toBeInTheDocument()
+    expect(screen.getByRole('status')).toHaveTextContent('Taylor Jordan added.')
+    expect(screen.getByRole('heading', { name: 'Your contacts' })).toHaveFocus()
   })
 
   it('edits an existing contact', async () => {
     const user = userEvent.setup()
     renderApp()
     await user.click(screen.getByRole('button', { name: 'Edit Olivia Rhye' }))
+    expect(screen.getByLabelText('First name')).toHaveFocus()
 
     const firstName = screen.getByLabelText('First name')
     await user.clear(firstName)
@@ -63,6 +67,7 @@ describe('phone book', () => {
     expect(screen.getByRole('heading', { name: 'Olivia-Rose Rhye' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: '(555) 010-8899' })).toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: 'Olivia Rhye' })).not.toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Your contacts' })).toHaveFocus()
   })
 
   it('does not submit when required input is empty', async () => {
@@ -98,13 +103,14 @@ describe('phone book', () => {
   })
 
   it('shows initials if a profile photo fails to load', () => {
-    renderApp()
-    const avatar = screen.getByRole('img', { name: 'Olivia Rhye' })
+    const { container } = renderApp()
+    const avatar = container.querySelector('img[src="https://i.pravatar.cc/160?img=47"]')
+    expect(avatar).toHaveAttribute('alt', '')
 
     fireEvent.error(avatar)
 
-    expect(screen.queryByRole('img', { name: 'Olivia Rhye' })).not.toBeInTheDocument()
-    expect(screen.getByText('OR')).toBeInTheDocument()
+    expect(container.querySelector('img[src="https://i.pravatar.cc/160?img=47"]')).not.toBeInTheDocument()
+    expect(screen.getByText('OR')).toHaveAttribute('aria-hidden', 'true')
   })
 
   it('asks for confirmation before deleting and restores focus when cancelled', async () => {
@@ -115,6 +121,7 @@ describe('phone book', () => {
 
     const dialog = screen.getByRole('alertdialog', { name: 'Delete Olivia Rhye?' })
     expect(dialog).toBeInTheDocument()
+    expect(dialog).toHaveAccessibleDescription('This contact will be removed from your phone book. This action cannot be undone.')
     expect(screen.getByRole('button', { name: 'Cancel' })).toHaveFocus()
     expect(screen.getByRole('heading', { name: 'Olivia Rhye' })).toBeInTheDocument()
 
@@ -149,6 +156,22 @@ describe('phone book', () => {
     expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Olivia Rhye' })).toBeInTheDocument()
     expect(deleteButton).toHaveFocus()
+  })
+
+  it('keeps keyboard focus inside the delete confirmation dialog', async () => {
+    const user = userEvent.setup()
+    renderApp()
+    await user.click(screen.getByRole('button', { name: 'Delete Olivia Rhye' }))
+    const cancelButton = screen.getByRole('button', { name: 'Cancel' })
+    const confirmButton = screen.getByRole('button', { name: 'Delete contact' })
+
+    expect(cancelButton).toHaveFocus()
+    await user.tab()
+    expect(confirmButton).toHaveFocus()
+    await user.tab()
+    expect(cancelButton).toHaveFocus()
+    await user.tab({ shift: true })
+    expect(confirmButton).toHaveFocus()
   })
 
   it('reports an error if deleting cannot be saved to this device', async () => {
