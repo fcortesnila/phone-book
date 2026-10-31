@@ -1,39 +1,91 @@
 # Phone Book
 
-This frontend project was created with Codex using React, Vite, and Tailwind CSS.
+A small portfolio demo for keeping contact details organized. The app displays a searchable contact list with profile photos and supports adding, editing, and deleting contacts with confirmation.
 
-## Getting started
+## Features
 
-```sh
-npm install
-npm run dev
-```
+- Search contacts by name or phone number.
+- Add and edit names, phone numbers, optional email addresses, and optional profile photo URLs.
+- Delete contacts after confirming the action.
+- Keep front-end changes in browser `localStorage` and show an initials fallback when a photo fails to load.
 
-## Available scripts
+## Screenshot
 
-- `npm run dev` starts the development server.
-- `npm run build` creates a production build in `dist/`.
-- `npm run preview` serves the production build locally.
-- `npm run lint` runs Oxlint.
+_Screenshot not included yet. Add an image of the app to this repository and link it here._
 
-Tailwind CSS is integrated through `@tailwindcss/vite`; styles are loaded from `src/index.css`.
+## Architecture
 
-## Local API demo
+- **Frontend:** React, Vite, and Tailwind CSS. Contact data is stored in the browser with `localStorage`.
+- **API:** A separate FastAPI service under `server/`, with validated contact models and SQLite persistence.
 
-A standalone FastAPI service with SQLite persistence is documented in [server/README.md](server/README.md). It uses synthetic contacts and is intended for local development only; the frontend is not connected to it yet.
+The frontend is **not connected** to the API. They currently store and serve separate contact data; running both does not sync contacts.
 
-## Provider-neutral hosting notes
-
-The frontend and API are separate services; the frontend currently stores contacts in browser local storage and does not call the API. These notes describe build and runtime requirements only. No hosting provider is selected or configured.
+## Run locally
 
 ### Frontend
 
-- Build with `npm ci` followed by `npm run build`.
-- Publish and serve the generated `dist/` directory as static files. A long-running Node process is not required for static hosting.
-- No application environment variables are required. In particular, `VITE_API_URL` is not read by this frontend.
-- For a local smoke preview, run `npm run preview -- --host 0.0.0.0 --port "${PORT:-4173}"`. Vite Preview is for previewing a build, not a production web server.
+From the repository root:
 
-### API
+```sh
+npm ci
+npm run dev
+```
 
-- API installation, start command, health check, and SQLite storage requirements are documented in [server/README.md](server/README.md).
-- The frontend is not connected to this API. Hosting both services does not make their contacts sync.
+### API (optional)
+
+Requires Python 3.10 or newer.
+
+From the repository root:
+
+```sh
+cd server
+python -m venv .venv
+```
+
+Activate the virtual environment using the command for your shell (PowerShell: `.\.venv\Scripts\Activate.ps1`; macOS/Linux: `source .venv/bin/activate`), then install dependencies:
+
+```sh
+python -m pip install -r requirements.txt
+```
+
+Start the local API:
+
+```sh
+python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+```
+
+API docs are available at `http://127.0.0.1:8000/docs`. See [server/README.md](server/README.md) for endpoints and SQLite details.
+
+## Checks
+
+Run these from the repository root:
+
+```sh
+npm run test
+npm run lint
+npm run build
+```
+
+For API tests, activate the API virtual environment, change to `server/`, and run:
+
+```sh
+python -m pytest
+```
+
+The API tests use a temporary SQLite database and synthetic contact data.
+
+## CI
+
+[View the passing GitHub Actions run for the current `main` commit](https://github.com/fcortesnila/phone-book/actions/runs/41223261322). It completed both the frontend and API jobs successfully.
+
+## Codex workflow
+
+Repository guidance in [`AGENTS.md`](AGENTS.md) asks contributors to inspect relevant code and instructions before editing, preserve the demo scope and synthetic data, add tests for behavior changes, and report commands and results.
+
+_Add your Codex workflow details here._
+
+## Limitations
+
+- This is a local portfolio demo, not a deployed application.
+- The API has no authentication; the frontend and API are not integrated.
+- Use synthetic contact data only. Do not enter real personal or patient information.
