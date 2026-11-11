@@ -80,7 +80,7 @@ The API tests use a temporary SQLite database and synthetic contact data.
 
 ## GitHub Pages
 
-The `Deploy to GitHub Pages` workflow builds the frontend and deploys it whenever changes are pushed to `main`. To enable deployment, set the repository's Pages source to **GitHub Actions** under **Settings → Pages**. You can also start a deployment manually from the Actions tab.
+The CI workflow runs checks for pushes and pull requests, then deploys the frontend after successful checks on pushes to `main`. To enable deployment, set the repository's Pages source to **GitHub Actions** under **Settings → Pages**. You can also start a deployment manually from the Actions tab.
 
 The site will be available at [https://fcortesnila.github.io/phone-book/](https://fcortesnila.github.io/phone-book/). GitHub Pages hosts only the frontend; the optional FastAPI service is not deployed.
 
