@@ -27,8 +27,8 @@ The frontend is **not connected** to the API. They currently store and serve sep
 From the repository root:
 
 ```sh
-npm ci
-npm run dev
+pnpm install
+pnpm dev
 ```
 
 ### API (optional)
@@ -61,9 +61,9 @@ API docs are available at `http://127.0.0.1:8000/docs`. See [server/README.md](s
 Run these from the repository root:
 
 ```sh
-npm run test
-npm run lint
-npm run build
+pnpm test
+pnpm lint
+pnpm build
 ```
 
 For API tests, activate the API virtual environment, change to `server/`, and run:
