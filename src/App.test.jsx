@@ -108,14 +108,47 @@ describe('phone book', () => {
     expect(screen.getByRole('heading', { name: 'Casey Nguyen' })).toBeInTheDocument()
   })
 
-  it('shows initials if a profile photo fails to load', () => {
+  it('uses local cartoon portraits for the sample contacts', () => {
     const { container } = renderApp()
-    const avatar = container.querySelector('img[src="https://i.pravatar.cc/160?img=47"]')
+
+    const avatars = [...container.querySelectorAll('.contact-row img.avatar')]
+    expect(avatars).toHaveLength(6)
+    expect(avatars.map((avatar) => avatar.getAttribute('src'))).toEqual([
+      '/avatars/phoenix.svg',
+      '/avatars/natali.svg',
+      '/avatars/olivia.svg',
+      '/avatars/lana.svg',
+      '/avatars/demi.svg',
+      '/avatars/candice.svg',
+    ])
+    expect(avatars.every((avatar) => avatar.getAttribute('src').startsWith('/avatars/'))).toBe(true)
+  })
+
+  it('updates saved sample contacts to their local cartoon portraits', () => {
+    localStorage.setItem('phone-book-contacts', JSON.stringify([
+      {
+        id: 1,
+        firstName: 'Olivia',
+        lastName: 'Rhye',
+        phone: '(415) 555-0132',
+        email: 'olivia.rhye@example.com',
+        image: 'https://i.pravatar.cc/160?img=47',
+      },
+    ]))
+
+    renderApp()
+
+    expect(document.querySelector('img[src="/avatars/olivia.svg"]')).toBeInTheDocument()
+  })
+
+  it('shows initials if a profile image fails to load', () => {
+    const { container } = renderApp()
+    const avatar = container.querySelector('img[src="/avatars/olivia.svg"]')
     expect(avatar).toHaveAttribute('alt', '')
 
     fireEvent.error(avatar)
 
-    expect(container.querySelector('img[src="https://i.pravatar.cc/160?img=47"]')).not.toBeInTheDocument()
+    expect(container.querySelector('img[src="/avatars/olivia.svg"]')).not.toBeInTheDocument()
     expect(screen.getByText('OR')).toHaveAttribute('aria-hidden', 'true')
   })
 

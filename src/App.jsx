@@ -1,12 +1,30 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 
+const portraits = [
+  '/avatars/olivia.svg',
+  '/avatars/phoenix.svg',
+  '/avatars/lana.svg',
+  '/avatars/demi.svg',
+  '/avatars/candice.svg',
+  '/avatars/natali.svg',
+]
+
+const legacyPortraits = new Map([
+  ['https://i.pravatar.cc/160?img=47', portraits[0]],
+  ['https://i.pravatar.cc/160?img=12', portraits[1]],
+  ['https://i.pravatar.cc/160?img=44', portraits[2]],
+  ['https://i.pravatar.cc/160?img=32', portraits[3]],
+  ['https://i.pravatar.cc/160?img=49', portraits[4]],
+  ['https://i.pravatar.cc/160?img=25', portraits[5]],
+])
+
 const initialContacts = [
-  { id: 1, firstName: 'Olivia', lastName: 'Rhye', phone: '(415) 555-0132', email: 'olivia.rhye@example.com', image: 'https://i.pravatar.cc/160?img=47' },
-  { id: 2, firstName: 'Phoenix', lastName: 'Baker', phone: '(415) 555-0184', email: 'phoenix.baker@example.com', image: 'https://i.pravatar.cc/160?img=12' },
-  { id: 3, firstName: 'Lana', lastName: 'Steiner', phone: '(415) 555-0167', email: 'lana.steiner@example.com', image: 'https://i.pravatar.cc/160?img=44' },
-  { id: 4, firstName: 'Demi', lastName: 'Wilkinson', phone: '(415) 555-0191', email: 'demi.wilkinson@example.com', image: 'https://i.pravatar.cc/160?img=32' },
-  { id: 5, firstName: 'Candice', lastName: 'Wu', phone: '(415) 555-0128', email: 'candice.wu@example.com', image: 'https://i.pravatar.cc/160?img=49' },
-  { id: 6, firstName: 'Natali', lastName: 'Craig', phone: '(415) 555-0175', email: 'natali.craig@example.com', image: 'https://i.pravatar.cc/160?img=25' },
+  { id: 1, firstName: 'Olivia', lastName: 'Rhye', phone: '(415) 555-0132', email: 'olivia.rhye@example.com', image: portraits[0] },
+  { id: 2, firstName: 'Phoenix', lastName: 'Baker', phone: '(415) 555-0184', email: 'phoenix.baker@example.com', image: portraits[1] },
+  { id: 3, firstName: 'Lana', lastName: 'Steiner', phone: '(415) 555-0167', email: 'lana.steiner@example.com', image: portraits[2] },
+  { id: 4, firstName: 'Demi', lastName: 'Wilkinson', phone: '(415) 555-0191', email: 'demi.wilkinson@example.com', image: portraits[3] },
+  { id: 5, firstName: 'Candice', lastName: 'Wu', phone: '(415) 555-0128', email: 'candice.wu@example.com', image: portraits[4] },
+  { id: 6, firstName: 'Natali', lastName: 'Craig', phone: '(415) 555-0175', email: 'natali.craig@example.com', image: portraits[5] },
 ]
 
 function Icon({ name, size = 18 }) {
@@ -21,6 +39,17 @@ function Icon({ name, size = 18 }) {
   return null
 }
 
+function imageInputValue(image) {
+  return image.startsWith('/') ? new URL(image, window.location.origin).href : image
+}
+
+function contactImageValue(image) {
+  const url = image ? new URL(image) : null
+  return url?.origin === window.location.origin && url.pathname.startsWith('/avatars/')
+    ? `${url.pathname}${url.search}${url.hash}`
+    : image
+}
+
 function ContactAvatar({ contact, large = false }) {
   const [failed, setFailed] = useState(false)
   const initials = `${contact.firstName?.[0] ?? ''}${contact.lastName?.[0] ?? ''}`.toUpperCase()
@@ -32,7 +61,14 @@ function ContactAvatar({ contact, large = false }) {
 function App() {
   const [initialData] = useState(() => {
     try {
-      return { contacts: JSON.parse(localStorage.getItem('phone-book-contacts')) ?? initialContacts, error: '' }
+      const savedContacts = JSON.parse(localStorage.getItem('phone-book-contacts')) ?? initialContacts
+      return {
+        contacts: savedContacts.map((contact) => ({
+          ...contact,
+          image: legacyPortraits.get(contact.image) ?? contact.image,
+        })),
+        error: '',
+      }
     } catch {
       return { contacts: initialContacts, error: 'Could not load saved contacts. Showing sample contacts.' }
     }
@@ -90,7 +126,7 @@ function App() {
       lastName: form.get('lastName').trim(),
       phone: form.get('phone').trim(),
       email: form.get('email').trim(),
-      image: form.get('image').trim(),
+      image: contactImageValue(form.get('image').trim()),
     }
     const nextContacts = page.contact
       ? contacts.map((item) => item.id === contact.id ? contact : item)
@@ -173,7 +209,7 @@ function App() {
             </div>
             <label>Phone number<div className="input-with-icon"><Icon name="phone" size={17} /><input name="phone" type="tel" placeholder="(555) 000-0000" defaultValue={page.contact?.phone ?? ''} required /></div></label>
             <label>Email address <span className="optional">OPTIONAL</span><div className="input-with-icon"><Icon name="mail" size={17} /><input name="email" type="email" placeholder="name@example.com" defaultValue={page.contact?.email ?? ''} /></div></label>
-            <label>Profile photo URL <span className="optional">OPTIONAL</span><input name="image" type="url" placeholder="https://example.com/photo.jpg" defaultValue={page.contact?.image ?? ''} /></label>
+            <label>Profile photo URL <span className="optional">OPTIONAL</span><input name="image" type="url" placeholder="https://example.com/photo.jpg" defaultValue={imageInputValue(page.contact?.image ?? '')} /></label>
             <div className="form-actions"><button type="button" className="button button-quiet" onClick={() => setPage({ type: 'list' })}>Cancel</button><button className="button button-primary" type="submit">{page.type === 'edit' ? 'Save changes' : 'Add contact'}</button></div>
           </form>
         </main>
