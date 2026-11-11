@@ -26,6 +26,7 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 3px solid 
 .topbar-note { display: flex; align-items: center; gap: 9px; color: #aaa1b5; font-size: 12px; }
 .status-dot { display: inline-block; flex: 0 0 auto; width: 7px; height: 7px; border-radius: 50%; background: #ac8de8; }
 .directory-page, .form-page { max-width: 960px; margin: 0 auto; padding: 72px 28px 56px; }
+.directory-page { padding-top: 48px; }
 .welcome-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 32px; margin-bottom: 36px; }
 .eyebrow { margin: 0 0 12px; color: #b69af2; font-size: 10px; font-weight: 700; letter-spacing: .17em; }
 h1 { margin: 0; color: #ebe6f2; font-size: clamp(38px, 5vw, 52px); line-height: 1.08; letter-spacing: -.055em; font-weight: 600; }
