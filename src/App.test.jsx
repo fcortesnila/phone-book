@@ -8,6 +8,12 @@ function renderApp() {
 }
 
 describe('phone book', () => {
+  it('renders the directory in dark mode', () => {
+    const { container } = renderApp()
+
+    expect(container.querySelector('.app-shell')).toHaveAttribute('data-theme', 'dark')
+  })
+
   it('filters contacts by name and phone number', async () => {
     const user = userEvent.setup()
     renderApp()
@@ -187,4 +193,3 @@ describe('phone book', () => {
     expect(screen.queryByRole('heading', { name: 'Olivia Rhye' })).not.toBeInTheDocument()
   })
 })
-

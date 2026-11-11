@@ -148,7 +148,7 @@ function App() {
 
   return (
     <>
-    <div className="app-shell" inert={Boolean(contactToDelete)}>
+    <div className="app-shell" data-theme="dark" inert={Boolean(contactToDelete)}>
       <div className="sr-only" role="status" aria-live="polite" aria-atomic="true">{feedback?.type === 'error' ? '' : feedback?.message ?? ''}</div>
       <div className="sr-only" role="alert" aria-live="assertive" aria-atomic="true">{feedback?.type === 'error' ? feedback.message : ''}</div>
       <header className="topbar">
@@ -199,4 +199,3 @@ function App() {
 }
 
 export default App
-
