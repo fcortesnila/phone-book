@@ -114,14 +114,14 @@ describe('phone book', () => {
     const avatars = [...container.querySelectorAll('.contact-row img.avatar')]
     expect(avatars).toHaveLength(6)
     expect(avatars.map((avatar) => avatar.getAttribute('src'))).toEqual([
-      '/avatars/phoenix.svg',
-      '/avatars/natali.svg',
-      '/avatars/olivia.svg',
-      '/avatars/lana.svg',
-      '/avatars/demi.svg',
-      '/avatars/candice.svg',
+      `${import.meta.env.BASE_URL}avatars/phoenix.svg`,
+      `${import.meta.env.BASE_URL}avatars/natali.svg`,
+      `${import.meta.env.BASE_URL}avatars/olivia.svg`,
+      `${import.meta.env.BASE_URL}avatars/lana.svg`,
+      `${import.meta.env.BASE_URL}avatars/demi.svg`,
+      `${import.meta.env.BASE_URL}avatars/candice.svg`,
     ])
-    expect(avatars.every((avatar) => avatar.getAttribute('src').startsWith('/avatars/'))).toBe(true)
+    expect(avatars.every((avatar) => avatar.getAttribute('src').startsWith(`${import.meta.env.BASE_URL}avatars/`))).toBe(true)
   })
 
   it('updates saved sample contacts to their local cartoon portraits', () => {
@@ -138,17 +138,17 @@ describe('phone book', () => {
 
     renderApp()
 
-    expect(document.querySelector('img[src="/avatars/olivia.svg"]')).toBeInTheDocument()
+    expect(document.querySelector(`img[src="${import.meta.env.BASE_URL}avatars/olivia.svg"]`)).toBeInTheDocument()
   })
 
   it('shows initials if a profile image fails to load', () => {
     const { container } = renderApp()
-    const avatar = container.querySelector('img[src="/avatars/olivia.svg"]')
+    const avatar = container.querySelector(`img[src="${import.meta.env.BASE_URL}avatars/olivia.svg"]`)
     expect(avatar).toHaveAttribute('alt', '')
 
     fireEvent.error(avatar)
 
-    expect(container.querySelector('img[src="/avatars/olivia.svg"]')).not.toBeInTheDocument()
+    expect(container.querySelector(`img[src="${import.meta.env.BASE_URL}avatars/olivia.svg"]`)).not.toBeInTheDocument()
     expect(screen.getByText('OR')).toHaveAttribute('aria-hidden', 'true')
   })
 

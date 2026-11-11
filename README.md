@@ -78,6 +78,12 @@ The API tests use a temporary SQLite database and synthetic contact data.
 
 [View the passing GitHub Actions run for the current `main` commit](https://github.com/fcortesnila/phone-book/actions/runs/41223261322). It completed both the frontend and API jobs successfully.
 
+## GitHub Pages
+
+The `Deploy to GitHub Pages` workflow builds the frontend and deploys it whenever changes are pushed to `main`. To enable deployment, set the repository's Pages source to **GitHub Actions** under **Settings → Pages**. You can also start a deployment manually from the Actions tab.
+
+The site will be available at [https://fcortesnila.github.io/phone-book/](https://fcortesnila.github.io/phone-book/). GitHub Pages hosts only the frontend; the optional FastAPI service is not deployed.
+
 ## Codex workflow
 
 Repository guidance in [`AGENTS.md`](AGENTS.md) asks contributors to inspect relevant code and instructions before editing, preserve the demo scope and synthetic data, add tests for behavior changes, and report commands and results.
@@ -86,6 +92,6 @@ _Add your Codex workflow details here._
 
 ## Limitations
 
-- This is a local portfolio demo, not a deployed application.
+- This is a portfolio demo; the GitHub Pages deployment hosts only its frontend.
 - The API has no authentication; the frontend and API are not integrated.
 - Use synthetic contact data only. Do not enter real personal or patient information.

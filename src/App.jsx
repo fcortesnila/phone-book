@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 
 const portraits = [
-  '/avatars/olivia.svg',
-  '/avatars/phoenix.svg',
-  '/avatars/lana.svg',
-  '/avatars/demi.svg',
-  '/avatars/candice.svg',
-  '/avatars/natali.svg',
-]
+  'olivia.svg',
+  'phoenix.svg',
+  'lana.svg',
+  'demi.svg',
+  'candice.svg',
+  'natali.svg',
+].map((filename) => `${import.meta.env.BASE_URL}avatars/${filename}`)
 
 const legacyPortraits = new Map([
   ['https://i.pravatar.cc/160?img=47', portraits[0]],
@@ -45,8 +45,10 @@ function imageInputValue(image) {
 
 function contactImageValue(image) {
   const url = image ? new URL(image) : null
-  return url?.origin === window.location.origin && url.pathname.startsWith('/avatars/')
-    ? `${url.pathname}${url.search}${url.hash}`
+  const basePath = new URL(import.meta.env.BASE_URL, window.location.origin).pathname
+  const avatarPath = `${basePath}avatars/`
+  return url?.origin === window.location.origin && url.pathname.startsWith(avatarPath)
+    ? `${import.meta.env.BASE_URL}avatars/${url.pathname.slice(avatarPath.length)}${url.search}${url.hash}`
     : image
 }
 
